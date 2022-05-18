@@ -34,7 +34,7 @@ if TEST_GA:
     N_TRIALS = 1
 
 # THE POPULATION
-pop = [[SethController()] * 3 for _ in range(POP_SIZE)]  # the evolving population (a list of SethControllers)
+pop = [[SethController(), SethController(), SethController()] for _ in range(POP_SIZE)]  # the evolving population (a list of SethControllers)
 
 # This keeps track of the fitness of the entire population since the start of the evolution.
 # It is plotted in fitness_history.png
@@ -257,11 +257,11 @@ def generation():
         plot_state_history(savepath, all_individuals[best_index], 'best')
         all_individuals[best_index].plot_links('best')
 
-        np.save(os.path.join(savepath, 'best_genome.npy'), pop[best_index].genome)
+        np.save(os.path.join(savepath, 'best_genome.npy'), all_individuals[best_index].genome)
 
-        worst_index = np.argmin(fitnesses)
+        """worst_index = np.argmin(fitnesses)
         plot_state_history(savepath, all_individuals[worst_index], 'worst')
-        all_individuals[worst_index].plot_links('worst')
+        all_individuals[worst_index].plot_links('worst')"""
 
         # ## can plot others too, but actually takes a fair amount of
         # ## time, so leave commented out unless curious
