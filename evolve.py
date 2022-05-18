@@ -1,3 +1,5 @@
+import copy
+
 from pylab import *
 import os,sys
 from scipy.spatial.distance import euclidean
@@ -248,14 +250,18 @@ def generation():
     # ## worst individual
     if (generation_index % DRAW_EVERY_NTH_GENERATION) == 0:
         best_index = np.argmax(fitnesses)
-        plot_state_history(savepath, pop[best_index], 'best')
-        pop[best_index].plot_links('best')
+        all_individuals = []
+        for item in pop:
+            for control in item:
+                all_individuals.append(control)
+        plot_state_history(savepath, all_individuals[best_index], 'best')
+        all_individuals[best_index].plot_links('best')
 
         np.save(os.path.join(savepath, 'best_genome.npy'), pop[best_index].genome)
 
         worst_index = np.argmin(fitnesses)
-        plot_state_history(savepath, pop[worst_index], 'worst')
-        pop[worst_index].plot_links('worst')
+        plot_state_history(savepath, all_individuals[worst_index], 'worst')
+        all_individuals[worst_index].plot_links('worst')
 
         # ## can plot others too, but actually takes a fair amount of
         # ## time, so leave commented out unless curious
