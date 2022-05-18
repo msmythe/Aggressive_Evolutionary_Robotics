@@ -7,8 +7,6 @@ ENTITY_RADIUS = 0.1
 
 class EntityTypes(IntEnum):
     FOOD  = 0
-    WATER = 1
-    TRAP  = 2
 
 class Sides(IntEnum):
     LEFT_SIDE   = 0 # all connections are ipsilateral

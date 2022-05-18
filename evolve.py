@@ -1,15 +1,14 @@
-import os
-from multiprocessing import Pool
-
-import pyximport
 from pylab import *
+import os,sys
+from scipy.spatial.distance import euclidean
 
-from plotting import plot_state_history, fitness_plots, plot_population_genepool
-from robot import Robot, Light
+import pyximport; pyximport.install(language_level=3)
+from robot import Robot,Light
 from seth_controller import SethController, EntityTypes, ENTITY_RADIUS
+from plotting import plot_state_history,fitness_plots,plot_population_genepool
 
+from multiprocessing import Pool
 plt.switch_backend('agg')
-pyximport.install(language_level=3)
 
 np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
@@ -89,11 +88,10 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 
     # reset the environment
     for entity_type in EntityTypes:
-        n = {
-            EntityTypes.FOOD: 2,  # how many of each entity type to create
-            EntityTypes.WATER: 0,
-            EntityTypes.TRAP: 0,
-        }
+        n = {EntityTypes.FOOD: 2}  # how many of each entity type to create
+            #EntityTypes.WATER: 0,
+            #EntityTypes.TRAP: 0,
+
         for _ in range(n[entity_type]):
             x, y = random_light_position(robots)
             entity_light = Light(x, y, entity_type)
@@ -102,33 +100,33 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 
             if entity_type == EntityTypes.FOOD:
                 food_entities.append(entity_light)
-            if entity_type == EntityTypes.WATER:
+            """if entity_type == EntityTypes.WATER:
                 water_entities.append(entity_light)
             if entity_type == EntityTypes.TRAP:
-                trap_entities.append(entity_light)
+                trap_entities.append(entity_light)"""
 
     # batteries
-    water_b = 1.0
+    # water_b = 1.0
     food_b = 1.0
 
     # these variables keep track of things we want to plot later
     for controller in controllers:
         controller.trial_data['sample_times'] = []
-        controller.trial_data['water_battery_h'] = []
+        # controller.trial_data['water_battery_h'] = []
         controller.trial_data['food_battery_h'] = []
         controller.trial_data['score_h'] = []
         controller.trial_data['eaten_FOOD_positions'] = []
-        controller.trial_data['eaten_WATER_positions'] = []
-        controller.trial_data['eaten_TRAP_positions'] = []
+        # controller.trial_data['eaten_WATER_positions'] = []
+        # controller.trial_data['eaten_TRAP_positions'] = []
         controller.trial_data['FOOD_positions'] = []
-        controller.trial_data['WATER_positions'] = []
-        controller.trial_data['TRAP_positions'] = []
+        # controller.trial_data['WATER_positions'] = []
+        # controller.trial_data['TRAP_positions'] = []
 
     for iteration in range(N_STEPS):
         for controller in controllers:
             # keep track of battery states for plotting later
             controller.trial_data['sample_times'].append(current_time)
-            controller.trial_data['water_battery_h'].append(water_b)
+            # controller.trial_data['water_battery_h'].append(water_b)
             controller.trial_data['food_battery_h'].append(food_b)
             controller.trial_data['score_h'].append(score)
 
@@ -136,15 +134,15 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
             # used in animation
             for controller in controllers:
                 controller.trial_data[f'FOOD_positions'].append([(l.x, l.y) for l in food_entities])
-                controller.trial_data[f'WATER_positions'].append([(l.x, l.y) for l in water_entities])
-                controller.trial_data[f'TRAP_positions'].append([(l.x, l.y) for l in trap_entities])
+                # controller.trial_data[f'WATER_positions'].append([(l.x, l.y) for l in water_entities])
+                # controller.trial_data[f'TRAP_positions'].append([(l.x, l.y) for l in trap_entities])
 
         # each iteration, the time moves forward by the time-step, 'DT'
         current_time += DT
 
         # the battery states steadily drain at a constant rate
         DRAIN_RATE = 0.0
-        water_b = water_b - DT * DRAIN_RATE
+        # water_b = water_b - DT * DRAIN_RATE
         food_b = food_b - DT * DRAIN_RATE
 
         # water_b -= (robot.lm**2) * DT * 0.01
@@ -159,7 +157,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                 controllers[i].set_sensor_states(entity_type, robots[i].sensors[entity_type])
         # tell the robot body what the controller says its motors should be
         for i in range(len(controllers)):
-            robots[i].lm, robots[i].rm = controllers[i].get_motor_output((food_b, water_b))
+            robots[i].lm, robots[i].rm = controllers[i].get_motor_output((food_b, 1))
 
             robots[i].calculate_derivative()  # calculate the way that the robot's state it changing
             robots[i].euler_update(DT=DT)  # apply that state change (Euler integration step)
@@ -167,14 +165,15 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         # check if robot has collided with FOOD, WATER or TRAP and
         # update batteries, etc.  accordingly
         # check for FOOD collisions
-        for light in robot.lights[EntityTypes.FOOD]:
-            if (robot.x - light.x) ** 2 + (robot.y - light.y) ** 2 < ENTITY_RADIUS ** 2:
-                food_b += 20.0 * DT
-                controller.trial_data['eaten_FOOD_positions'].append((light.x, light.y))
-                light.x, light.y = random_light_position(robot)  # relocate entity
+        for i in range(len(controllers)):
+            for light in robots[i].lights[EntityTypes.FOOD]:
+                if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
+                    food_b += 20.0 * DT
+                    controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
+                    light.x, light.y = random_light_position(robots)  # relocate entity
 
         # check for WATER collisions
-        for light in robot.lights[EntityTypes.WATER]:
+        """for light in robot.lights[EntityTypes.WATER]:
             if (robot.x - light.x) ** 2 + (robot.y - light.y) ** 2 < ENTITY_RADIUS ** 2:
                 water_b += 20.0 * DT
                 controller.trial_data['eaten_WATER_positions'].append((light.x, light.y))
@@ -187,26 +186,29 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                 water_b -= 50.0 * DT
                 score = 0.0
                 controller.trial_data['eaten_TRAP_positions'].append((light.x, light.y))
-                light.x, light.y = random_light_position(robot)  # relocate entity
+                light.x, light.y = random_light_position(robot)  # relocate entity"""
 
         # DEATH -- if either of the batteries reaches 0, the trial is over
-        if food_b < 0.0 or water_b < 0.0:
+        if food_b < 0.0: # or water_b < 0.0:
             food_b = water_b = 0.0
             break
 
     # record the position of the entities still not eaten at end of trial (used for plotting)
-    controller.trial_data['uneaten_FOOD_positions'] = [(l.x, l.y) for l in robot.lights[EntityTypes.FOOD]]
-    controller.trial_data['uneaten_WATER_positions'] = [(l.x, l.y) for l in robot.lights[EntityTypes.WATER]]
-    controller.trial_data['uneaten_TRAP_positions'] = [(l.x, l.y) for l in robot.lights[EntityTypes.TRAP]]
-    controller.trial_data['robot'] = robot
+    for i in range(len(controllers)):
+        controllers[i].trial_data['uneaten_FOOD_positions'] = [(l.x, l.y) for l in robots[i].lights[EntityTypes.FOOD]]
+        # controllers[i].trial_data['uneaten_WATER_positions'] = [(l.x, l.y) for l in robots[i].lights[EntityTypes.WATER]]
+        # controllers[i].trial_data['uneaten_TRAP_positions'] = [(l.x, l.y) for l in robots[i].lights[EntityTypes.TRAP]]
+        controllers[i].trial_data['robot'] = robots[i]
 
     if TEST_GA:
-        score = np.mean(controller.genome)
+        score = 0
+        for controller in controllers:
+            score += np.mean(controller.genome)
 
     return score
 
 
-def evaluate_fitness(controller):
+def evaluate_fitness(controllers):
     """An evaluation of an individual's fitness is the average of its
     performance in N_TRIAL simulations.
 
@@ -214,24 +216,31 @@ def evaluate_fitness(controller):
 
     """
 
-    trial_scores = [simulate_trial(controller, trial_index) for trial_index in range(N_TRIALS)]
-    controller.fitness = np.mean(trial_scores)
+    trial_scores = [simulate_trial(controllers, trial_index) for trial_index in range(N_TRIALS)]
+    for controller in controllers:
+        controller.fitness = np.mean(trial_scores)
 
-    return controller
+    return controllers
 
 
 def generation():
     global pop, generation_index
 
     # parallel evaluation of fitnesses (in parallel using multiprocessing)
-    with Pool() as p:
-        pop = p.map(evaluate_fitness, pop)
+    #with Pool() as p:
+     #   pop = p.map(evaluate_fitness, pop)
+
+    for group in range(len(pop)):
+        pop[group] = evaluate_fitness(pop[group])
 
     # ## sequential evaluation of fitness
     # pop = [evaluate_fitness(controller) for controller in pop]
 
     # the fitness of every individual controller in the population
-    fitnesses = [r.fitness for r in pop]
+    fitnesses = []
+    for item in pop:
+        for control in item:
+            fitnesses.append(control.fitness)
     # we track the fitness of every individual at every generation for plotting
     pop_fit_history.append(sorted(np.array(fitnesses)))
 
