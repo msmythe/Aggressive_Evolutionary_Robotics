@@ -256,7 +256,8 @@ def generation() :
     
     ## normalize the distribution of fitnesses to lie between 0 and 1
     f_normalized = np.array([x for x in fitnesses])
-    f_normalized -= min(f_normalized)
+    if min(f_normalized) < max(f_normalized):
+        f_normalized -= min(f_normalized)
     if max(f_normalized) > 0.0 :
         f_normalized /= max(f_normalized)
     sum_f = max(0.01,sum(f_normalized))
