@@ -100,6 +100,9 @@ class Robot(object) :
         self.a_h.append(self.a)
 
         #### INSERT EULER INTEGRATION HERE (START)
+        self.x += (self.dx)*DT
+        self.y += (self.dy)*DT
+        self.a += (self.da)*DT
         #### INSERT EULER INTEGRATION HERE (END)
 
         WRAP = True
