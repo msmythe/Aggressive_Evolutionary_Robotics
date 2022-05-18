@@ -9,6 +9,7 @@ class EntityTypes(IntEnum):
     FOOD  = 0
     WATER = 1
     TRAP  = 2
+    ROBOT = 3
 
 class Sides(IntEnum):
     LEFT_SIDE   = 0 # all connections are ipsilateral

@@ -232,9 +232,8 @@ if __name__ == '__main__' :
             ## BRAITENBERG AGGRESSION
 
             ## BRAITENBERG LOVE
-
-
-            
+            robot.lm = right_sensor
+            robot.rm = left_sensor
 
         plot(robot.x_h,
              robot.y_h,
