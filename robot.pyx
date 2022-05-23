@@ -130,7 +130,7 @@ class Robot(object) :
                     return True
         return False
 
-    def calculate_derivative(self, Z) :
+    def calculate_derivative(self) :
         ## Given the left and right motor values of the robot, this
         ## function calculates the rate at which the x and y position
         ## of the robot and its orientation are currently changing.
@@ -141,7 +141,6 @@ class Robot(object) :
         self.dx = self.MOTOR_SPEED * cos(self.a)*(self.lm+self.rm)
         self.dy = self.MOTOR_SPEED * sin(self.a)*(self.lm+self.rm)
         self.da = self.MOTOR_SPEED * (self.rm-self.lm) / self.RADIUS
-        return [self.dx, self.dy, self.da]
         
     def euler_update(self,DT=0.02) :
         ## these lists track the position and heading of the robot
