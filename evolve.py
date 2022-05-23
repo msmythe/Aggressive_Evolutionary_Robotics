@@ -236,7 +236,6 @@ def generation():
 
     """for group in range(len(pop)):
         pop[group] = evaluate_fitness(pop[group])"""
-
     # ## sequential evaluation of fitness
     # pop = [evaluate_fitness(controller) for controller in pop]
 
