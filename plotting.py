@@ -17,6 +17,8 @@ def plot_state_history(savepath,controller,file_prefix) :
     for entity_type in EntityTypes:
         colors = {
             EntityTypes.FOOD : 'g',
+            EntityTypes.WATER : 'b',
+            EntityTypes.TRAP : 'r',
         }
         for x,y in controller.trial_data[f'eaten_{entity_type.name}_positions'] :
             c = plt.Circle((x,y), ENTITY_RADIUS, color=colors[entity_type],fill=False)
@@ -35,7 +37,7 @@ def plot_state_history(savepath,controller,file_prefix) :
     ###########################
     figure()
     subplot2grid((4,1),(0,0))
-    # plot(controller.trial_data['sample_times'],controller.trial_data['water_battery_h'],'b-',label=f'water')
+    plot(controller.trial_data['sample_times'],controller.trial_data['water_battery_h'],'b-',label=f'water')
     plot(controller.trial_data['sample_times'],controller.trial_data['food_battery_h'],'g-',label=f'food')
     ylabel('batteries')
     ylim(0.0,3.5)
@@ -57,6 +59,8 @@ def plot_state_history(savepath,controller,file_prefix) :
     for entity_type in EntityTypes:
         colors = {
             EntityTypes.FOOD : '#00ff00',
+            EntityTypes.WATER : '#0000ff',
+            EntityTypes.TRAP : '#ff0000',
         }
         s_h = np.array(robot.sensors_h[entity_type])
         plot(controller.trial_data['sample_times'],s_h[:,0],color=colors[entity_type],ls='-')

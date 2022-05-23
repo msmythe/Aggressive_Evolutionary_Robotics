@@ -7,10 +7,12 @@ ENTITY_RADIUS = 0.1
 
 class EntityTypes(IntEnum):
     FOOD  = 0
+    WATER = 1
+    TRAP  = 2
 
 class Sides(IntEnum):
-    LEFT_SIDE   = 0 # all connections are ipsilateral
-    RIGHT_SIDE = 1  # 
+    LEFT_SIDE  = 0 # all connections are ipsilateral
+    RIGHT_SIDE = 1 # 
     
 class SMLink(object):
     """ A single sensor to motor link. A SethController involves several of these."""
@@ -92,7 +94,6 @@ class SethController(object):
         self.links = np.array([
             [SMLink() for s in range(3)]
             for ipsicontra in range(n_sides)])
-            
         self.genome_to_links()
         self.sensor_states = {}
 
@@ -223,6 +224,7 @@ class SethController(object):
 if __name__ == '__main__' :
     l = SMLink()
     genome = np.random.rand(SMLink.N_GENES) ## a random genome
+    print("genome: ",genome)
     #    genome = [ ] # UNCOMMENT AND EDIT THIS LINE TO SPECIFY YOUR GENOME
     l.set_genome(genome)
     xs = linspace(0,1,101)

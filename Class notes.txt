@@ -1,0 +1,7 @@
+seth_controller.pyx
+
+class EntityTypes(IntEnum)
+
+class Sides(IntEnum)
+
+class SMLink(object)
