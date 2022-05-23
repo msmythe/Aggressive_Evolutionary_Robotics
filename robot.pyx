@@ -13,6 +13,8 @@ class Robot(object) :
         self.otherRobots = []
         self.sensors = {}
         self.sensors_h = {}
+        self.sensors['robot'] = (0.0, 0.0)
+        self.sensors_h['robot'] = []
 
     def reset(self) :
         self.RADIUS = 0.1
