@@ -72,7 +72,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 
     # initialize the simulation
     current_time = 0.0
-    score = 0.0
+    score = [0 for _ in range(PER_GROUP)]
 
     # reset the robot
     robots = [Robot()] * PER_GROUP
@@ -111,7 +111,8 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 
     # batteries
     # water_b = 1.0
-    food_b = 1.0
+
+    food_b = [1.0 for _ in range(PER_GROUP)]
 
     # these variables keep track of things we want to plot later
     for controller in controllers:
@@ -127,12 +128,12 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         # controller.trial_data['TRAP_positions'] = []
 
     for iteration in range(N_STEPS):
-        for controller in controllers:
+        for i, controller in enumerate(controllers):
             # keep track of battery states for plotting later
             controller.trial_data['sample_times'].append(current_time)
             # controller.trial_data['water_battery_h'].append(water_b)
-            controller.trial_data['food_battery_h'].append(food_b)
-            controller.trial_data['score_h'].append(score)
+            controller.trial_data['food_battery_h'].append(food_b[i])
+            controller.trial_data['score_h'].append(score[i])
 
         if generating_animation:
             # used in animation
@@ -147,12 +148,14 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         # the battery states steadily drain at a constant rate
         DRAIN_RATE = 0.0
         # water_b = water_b - DT * DRAIN_RATE
-        food_b = food_b - DT * DRAIN_RATE
+        for i, item in enumerate(food_b):
+            food_b[i] = item - DT * DRAIN_RATE
 
         # water_b -= (robot.lm**2) * DT * 0.01
         # food_b  -= (robot.rm**2) * DT * 0.01
 
-        score += food_b * DT
+        for i, item in enumerate(score):
+            score[i] += food_b[i] * DT
 
         # interaction between body and controller
         # tell the controller what the states of its various sensors are
@@ -161,7 +164,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                 controllers[i].set_sensor_states(entity_type, robots[i].sensors[entity_type])
         # tell the robot body what the controller says its motors should be
         for i in range(len(controllers)):
-            robots[i].lm, robots[i].rm = controllers[i].get_motor_output((food_b, 1))
+            robots[i].lm, robots[i].rm = controllers[i].get_motor_output((food_b[i], 1))
 
             robots[i].calculate_derivative()  # calculate the way that the robot's state it changing
             robots[i].euler_update(DT=DT)  # apply that state change (Euler integration step)
@@ -172,7 +175,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         for i in range(len(controllers)):
             for light in robots[i].lights[EntityTypes.FOOD]:
                 if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
-                    food_b += 20.0 * DT
+                    food_b[i] += 20.0 * DT
                     controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
                     light.x, light.y = random_light_position(robots)  # relocate entity
 
@@ -193,9 +196,9 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                 light.x, light.y = random_light_position(robot)  # relocate entity"""
 
         # DEATH -- if either of the batteries reaches 0, the trial is over
-        if food_b < 0.0: # or water_b < 0.0:
+        """if food_b < 0.0: # or water_b < 0.0:
             food_b = water_b = 0.0
-            break
+            break"""
 
     # record the position of the entities still not eaten at end of trial (used for plotting)
     for i in range(len(controllers)):
@@ -205,9 +208,9 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         controllers[i].trial_data['robot'] = robots[i]
 
     if TEST_GA:
-        score = 0
+        score = []
         for controller in controllers:
-            score += np.mean(controller.genome)
+            score.append(np.mean(controller.genome))
 
     return score
 
@@ -220,9 +223,9 @@ def evaluate_fitness(controllers):
 
     """
 
-    trial_scores = [simulate_trial(controllers, trial_index) for trial_index in range(N_TRIALS)]
-    for controller in controllers:
-        controller.fitness = np.mean(trial_scores)
+    trial_scores = np.array([simulate_trial(controllers, trial_index) for trial_index in range(N_TRIALS)])
+    for i, controller in enumerate(controllers):
+        controller.fitness = np.mean(trial_scores[:, i])
 
     return controllers
 
