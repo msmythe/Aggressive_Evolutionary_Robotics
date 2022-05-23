@@ -270,10 +270,17 @@ def evaluate_fitness(controllers) :
 
     """
     trial_scores = [simulate_trial(controllers,trial_index) for trial_index in range(N_TRIALS)]
-    
-    controller_trial_scores=[0 for i in range(len(controllers))]
-    
-    controller.fitness = np.mean(trial_scores)
+    for controller in controllers:
+        controller_index=controllers.index(controller)
+        temp_controller_trial_scores=[0]
+        for trial_score in trial_scores:
+            if len(trial_score)<=0:
+                continue
+            else:
+                temp_controller_trial_scores.append(trial_score[controller_index])
+        print("hello")
+        controller.fitness = np.mean(temp_controller_trial_scores)
+    print(trial_scores)
     
     return controllers
 
@@ -288,8 +295,12 @@ def generation() :
     pop = [evaluate_fitness(controller) for controller in pop]
 
     ## the fitness of every individual controller in the population
-    fitnesses = [r.fitness for r in pop]
-    print(fitnesses)
+    #fitnesses = [r.fitness for r in pop]
+    
+    for instance_controllers in pop:
+        for instance_controller in instance_controllers:
+            print(instance_controller.fitness)
+
     ## we track the fitness of every individual at every generation for plotting
     pop_fit_history.append(sorted(np.array(fitnesses)))
 
