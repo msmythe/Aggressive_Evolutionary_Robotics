@@ -2,6 +2,7 @@ from pylab import *
 from matplotlib.animation import FuncAnimation
 
 from evolve import simulate_trial
+from evolve import PER_GROUP
 from seth_controller import SethController,EntityTypes,ENTITY_RADIUS
 import os
 plt.switch_backend('TkAgg')
@@ -9,11 +10,13 @@ plt.switch_backend('TkAgg')
 its_per_frame = 1
 delay_between_frames = 50 # ms
 
-loadme = os.path.join('output','best_genome.npy')
+# loadme = os.path.join('output','best_genome.npy')
 
-best_genome = np.load(loadme)
+genomes = []
+for index in range(PER_GROUP):
+    genomes.append(np.load("output/{}_genome.npy".format(index)))
 
-controller = SethController(genome = best_genome)
+controller = [SethController(genome = genome) for genome in genomes]
 
 seed = np.random.randint(1000)
 simulate_trial(controller,seed,generating_animation=True)

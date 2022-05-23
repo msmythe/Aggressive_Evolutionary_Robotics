@@ -78,9 +78,9 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
     robots = [Robot()] * PER_GROUP
     for i in range(len(robots)):
         robots[i] = Robot()
-        robots[i].x = 0.0
-        robots[i].y = 0.0
-        robots[i].a = 0.0
+        robots[i].x = random.uniform(0, 1)
+        robots[i].y = random.uniform(0, 1)
+        robots[i].a = random.uniform(0, 1)
 
     # get the controller for the robot from the population
     for controller in controllers:
@@ -254,12 +254,14 @@ def generation():
     # ## every nth generation, we plot the trajectories of the best and
     # ## worst individual
     if (generation_index % DRAW_EVERY_NTH_GENERATION) == 0:
+        all_individuals.sort(key=lambda x: x.fitness)
+        fitnesses.sort()
         best_index = np.argmax(fitnesses)
 
         plot_state_history(savepath, all_individuals[best_index], 'best')
         all_individuals[best_index].plot_links('best')
-
-        np.save(os.path.join(savepath, 'best_genome.npy'), all_individuals[best_index].genome)
+        for index in range(PER_GROUP):
+            np.save(os.path.join(savepath, '{}_genome.npy'.format(index)), all_individuals[-index].genome)
 
         """worst_index = np.argmin(fitnesses)
         plot_state_history(savepath, all_individuals[worst_index], 'worst')
