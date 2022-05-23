@@ -1,0 +1,3 @@
+# Ignore saved output diagrams and best genome file.
+*.png
+*.npy
