@@ -10,12 +10,13 @@ class Robot(object) :
     def __init__(self) :
         self.reset()
         self.lights = {}
+        self.otherRobots = []
         self.sensors = {}
         self.sensors_h = {}
 
     def reset(self) :
         self.RADIUS = 0.1
-        self.MOTOR_SPEED = 1.0
+        self.MOTOR_SPEED = 2.0
         
         ## the robot's position in a 2D space
         self.x = 0.0
@@ -40,6 +41,46 @@ class Robot(object) :
         self.lm_h = []
         self.rm_h = []
 
+    def impact_sensor(self,sensor_x,sensor_y,sensor_angle) :
+        accum = 0.0
+        ## compensating for wrap around light viewing
+        ## acting as if there are lights at all of these offsets
+        # for lox,loy in [[-1.,0.],
+        #                 [+1.,0.],
+        #                 [0.,-1.],
+        #                 [0.,+1.],
+        #                 [0.,0.]] :
+        for lox,loy in [[0.,0.]] : ## this just has one light (no wrap around lighting)
+            lx = self.x + lox
+            ly = self.y + loy
+            
+            dSq = (sensor_x - lx)**2 + (sensor_y - ly)**2
+
+            # if the sensor were omnidirectional, its value would be
+            falloff = 0.25 # lower number, sensors fall off faster
+            omni = falloff/(falloff+dSq)
+
+            # ## ... but instead, we are going to have a linear falloff
+            # omni = max(0.0,1.0-dSq)
+                        
+            # calculate attenuation due to directionality
+            # sensor to light unit vector
+            s2l = [lx - sensor_x,
+                   ly - sensor_y]
+            s2l_mag = np.sqrt(s2l[0]**2 + s2l[1]**2)
+            if s2l_mag > 0.0 :
+                s2l = [v / s2l_mag for v in s2l]
+
+            # sensor direction unit vector
+            sd = [cos(sensor_angle),
+                  sin(sensor_angle)]
+
+            # positive set of dot product
+            attenuation = max(0.0,s2l[0]*sd[0] + s2l[1]*sd[1])
+
+            accum += omni * attenuation
+        return accum
+
     def add_light(self,light) :
         if light.light_type not in self.lights.keys() :
             self.lights[light.light_type] = []
@@ -57,6 +98,15 @@ class Robot(object) :
         rsx = self.x + cos(self.a-beta)*self.RADIUS
         rsy = self.y + sin(self.a-beta)*self.RADIUS
         rsa = self.a - beta
+        
+        ls = rs = 0.0
+        for r in self.otherRobots :
+            ls += r.impact_sensor(lsx,lsy,lsa)
+            rs += r.impact_sensor(rsx,rsy,rsa)
+        ls=min(1.0,ls)
+        rs=min(1.0,rs)
+        self.sensors['robot'] = (ls,rs)
+        self.sensors_h['robot'].append((ls,rs))
 
         ## calculate light impacts on sensors
         for light_type in self.lights.keys() :
@@ -79,8 +129,8 @@ class Robot(object) :
                 if (light.x-x)**2 + (light.y-y)**2 < close**2 :
                     return True
         return False
-            
-    def calculate_derivative(self) :
+
+    def calculate_derivative(self, Z) :
         ## Given the left and right motor values of the robot, this
         ## function calculates the rate at which the x and y position
         ## of the robot and its orientation are currently changing.
@@ -91,6 +141,7 @@ class Robot(object) :
         self.dx = self.MOTOR_SPEED * cos(self.a)*(self.lm+self.rm)
         self.dy = self.MOTOR_SPEED * sin(self.a)*(self.lm+self.rm)
         self.da = self.MOTOR_SPEED * (self.rm-self.lm) / self.RADIUS
+        return [self.dx, self.dy, self.da]
         
     def euler_update(self,DT=0.02) :
         ## these lists track the position and heading of the robot
@@ -100,9 +151,9 @@ class Robot(object) :
         self.a_h.append(self.a)
 
         #### INSERT EULER INTEGRATION HERE (START)
-        self.x += (self.dx)*DT
-        self.y += (self.dy)*DT
-        self.a += (self.da)*DT
+        self.x+=self.dx*DT
+        self.y+=self.dy*DT
+        self.a+=self.da*DT
         #### INSERT EULER INTEGRATION HERE (END)
 
         WRAP = True
