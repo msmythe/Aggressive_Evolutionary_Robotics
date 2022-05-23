@@ -111,10 +111,15 @@ def fitness_plots(savepath,pop_fit_history) :
 
 def plot_population_genepool(savepath,pop) :
         figure() # genes_of_entire_population
-        pop_size = len(pop)
-        g = np.zeros((pop[0].N_GENES,pop_size))
+        all_individuals = []
+        for item in pop:
+            for control in item:
+                all_individuals.append(control)
+        pop_size = len(all_individuals)
+
+        g = np.zeros((all_individuals[0].N_GENES,pop_size))
         for index in range(pop_size) :
-            g[:,index] = pop[index].genome
+            g[:,index] = all_individuals[index].genome
         imshow(g)
         xlabel('individual')
         ylabel('gene')

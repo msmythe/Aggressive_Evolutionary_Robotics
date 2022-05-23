@@ -8,6 +8,7 @@ import pyximport; pyximport.install(language_level=3)
 from robot import Robot,Light
 from seth_controller import SethController, EntityTypes, ENTITY_RADIUS
 from plotting import plot_state_history,fitness_plots,plot_population_genepool
+import random
 
 from multiprocessing import Pool
 plt.switch_backend('agg')
@@ -27,6 +28,7 @@ POP_SIZE = 25
 generation_index = 0
 SITUATION_DURATION = 15.0
 DT = 0.02
+PER_GROUP = 3
 N_STEPS = int(SITUATION_DURATION / DT)  # the maximum number of steps per trial
 
 if TEST_GA:
@@ -34,7 +36,7 @@ if TEST_GA:
     N_TRIALS = 1
 
 # THE POPULATION
-pop = [[SethController(), SethController(), SethController()] for _ in range(POP_SIZE)]  # the evolving population (a list of SethControllers)
+pop = [[SethController() for _ in range(PER_GROUP)] for _ in range(POP_SIZE)]  # the evolving population (a list of SethControllers)
 
 # This keeps track of the fitness of the entire population since the start of the evolution.
 # It is plotted in fitness_history.png
@@ -73,7 +75,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
     score = 0.0
 
     # reset the robot
-    robots = [Robot()] * 3
+    robots = [Robot()] * PER_GROUP
     for i in range(len(robots)):
         robots[i] = Robot()
         robots[i].x = 0.0
@@ -229,11 +231,11 @@ def generation():
     global pop, generation_index
 
     # parallel evaluation of fitnesses (in parallel using multiprocessing)
-    #with Pool() as p:
-     #   pop = p.map(evaluate_fitness, pop)
+    with Pool() as p:
+        pop = p.map(evaluate_fitness, pop)
 
-    for group in range(len(pop)):
-        pop[group] = evaluate_fitness(pop[group])
+    """for group in range(len(pop)):
+        pop[group] = evaluate_fitness(pop[group])"""
 
     # ## sequential evaluation of fitness
     # pop = [evaluate_fitness(controller) for controller in pop]
@@ -245,15 +247,15 @@ def generation():
             fitnesses.append(control.fitness)
     # we track the fitness of every individual at every generation for plotting
     pop_fit_history.append(sorted(np.array(fitnesses)))
-
+    all_individuals = []
+    for item in pop:
+        for control in item:
+            all_individuals.append(control)
     # ## every nth generation, we plot the trajectories of the best and
     # ## worst individual
     if (generation_index % DRAW_EVERY_NTH_GENERATION) == 0:
         best_index = np.argmax(fitnesses)
-        all_individuals = []
-        for item in pop:
-            for control in item:
-                all_individuals.append(control)
+
         plot_state_history(savepath, all_individuals[best_index], 'best')
         all_individuals[best_index].plot_links('best')
 
@@ -304,22 +306,32 @@ def generation():
     # "elitism" : we seed the next generation of a copy of the best
     # individual from the previous generation
     best_index = np.argmax(fitnesses)
-    best_individual = pop[best_index]
+    best_individual = all_individuals[best_index]
     next_generation = [SethController(genome=best_individual.genome)]
 
     # ...and then populate the rest of the next generation by selecting
     # parents in a weighted manner such that higher fitness parents have
     # a higher chance of being selected.
-    while len(next_generation) < POP_SIZE:
+    while len(next_generation) < POP_SIZE * PER_GROUP:
         a_i = weighted_choice(ps)
         b_i = weighted_choice(ps)
-        mama = pop[a_i]
-        dada = pop[b_i]
+        mama = all_individuals[a_i]
+        dada = all_individuals[b_i]
         baby = mama.procreate_with(dada)
         next_generation.append(baby)
 
     # replace the old generation with the new
-    pop = next_generation
+    random.shuffle(next_generation)
+    group_gen = []
+    for item in range(math.ceil(len(next_generation)/PER_GROUP)):
+        try:
+            group_gen.extend([next_generation[item*PER_GROUP:item*PER_GROUP + PER_GROUP]])
+        except IndexError:
+            final_group = next_generation[item*PER_GROUP:]
+            while len(final_group) < PER_GROUP:
+                final_group.append(SethController())
+            group_gen.extend([final_group])
+    pop = group_gen.copy()
 
     print(f'GENERATION # {generation_index}.\t(mean/min/max)' +
           f'({np.mean(fitnesses):.4f}/{np.min(fitnesses):.4f}/{np.max(fitnesses):.4f})')
