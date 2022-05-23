@@ -254,7 +254,7 @@ def test_directional_light_sensors() :
 
 if __name__ == '__main__' :
     #test_directional_light_sensors()
-
+    robots = []
     for n_robots in range(10) : 
         duration = 50.0
         DT = 0.02
@@ -264,35 +264,45 @@ if __name__ == '__main__' :
         robot.x = np.random.randn()
         robot.y = np.random.randn()
         robot.a = np.random.rand()*np.pi*2.0
-        light = Light(0,0,'default')
-        robot.add_light(light)
+        #light = Light(0,0,'default')
+        #robot.add_light(light)
+        robots.append(robot)
 
-        for iteration in range(iterations) :
+    for iteration in range(iterations) :
+        for robot in robots:
+            robots.remove(robot)
+            robot.otherRobots = robots.copy()
             robot.calculate_derivative()
             robot.euler_update(DT=DT)
 
             ## these are the current state of the robot's sensors
-            left_sensor = robot.sensors['default'][SensorSide.LEFT]
-            right_sensor = robot.sensors['default'][SensorSide.RIGHT]
+            left_sensor = robot.sensors['robot'][SensorSide.LEFT]
+            right_sensor = robot.sensors['robot'][SensorSide.RIGHT]
             
             #print(f'l:{left_sensor}\t r:{right_sensor}')
 
             ## NOT PARTICULARLY INTERESTING ROBOT
-            robot.lm = 0.4 
-            robot.rm = 0.5
+            #robot.lm = 0.4 
+            #robot.rm = 0.5
 
             ## BRAITENBERG AGGRESSION
-
-            ## BRAITENBERG LOVE
             robot.lm = right_sensor
             robot.rm = left_sensor
 
+            ## BRAITENBERG LOVE
+            #robot.rm= 0.3-right_sensor
+            #robot.lm= 0.3-left_sensor
+
+            
+            robots.append(robot)
+
+    for robot in robots:
         plot(robot.x_h,
-             robot.y_h,
-             ',')
+                robot.y_h,
+                ',')
 
         plot(robot.x_h[-1],
-             robot.y_h[-1],'ko',ms=3)
+                robot.y_h[-1],'ko',ms=3)
 
     plot(-999,-999,'k.',label=f'Robot Final Position')
     plot(0,0,',',label=f'Robot Trajectory')
