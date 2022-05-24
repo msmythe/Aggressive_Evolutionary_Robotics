@@ -75,13 +75,12 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
     score = [0 for _ in range(PER_GROUP)]
 
     # reset the robot
-    robots = [Robot()] * PER_GROUP
+    robots = [Robot() for _ in range(PER_GROUP)]
     for i in range(len(robots)):
         robots[i] = Robot()
         robots[i].x = random.uniform(0, 1)
         robots[i].y = random.uniform(0, 1)
         robots[i].a = random.uniform(0, 1)
-
     # get the controller for the robot from the population
     for controller in controllers:
         controller.trial_data = {}
@@ -178,6 +177,13 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                     food_b[i] += 20.0 * DT
                     controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
                     light.x, light.y = random_light_position(robots)  # relocate entity
+
+        for i in range(len(controllers)):
+            for light in robots[i].otherRobots:
+                if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
+                    food_b[i] += 20.0 * DT
+                    controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
+                    # Add code for determining whole wins the fight
 
         # check for WATER collisions
         """for light in robot.lights[EntityTypes.WATER]:
