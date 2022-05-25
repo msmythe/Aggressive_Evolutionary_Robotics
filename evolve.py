@@ -4,7 +4,7 @@ from pylab import *
 import os,sys
 from scipy.spatial.distance import euclidean
 
-import pyximport; pyximport.install(language_level=3)
+
 from robot import Robot,Light
 from seth_controller import SethController, EntityTypes, ENTITY_RADIUS
 from plotting import plot_state_history,fitness_plots,plot_population_genepool
@@ -61,11 +61,9 @@ def random_light_position(robots):
 def simulate_trial(controllers, trial_index, generating_animation=False):
     """
     controller       -- the controller we are simulating
-
     trial_index -- we evaluate fitness by taking the average of N
                    trials. This argument tells us which trial we are
                    currently simulating
-
     """
     # ## reset the seed to make randomness of environment consistent for this generation
     np.random.seed(generation_index * 10 + trial_index)
@@ -91,22 +89,28 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 
     # reset the environment
     for entity_type in EntityTypes:
-        n = {EntityTypes.FOOD: 2}  # how many of each entity type to create
+        n = {EntityTypes.FOOD: 2, EntityTypes.ROBOT: PER_GROUP}  # how many of each entity type to create
             #EntityTypes.WATER: 0,
             #EntityTypes.TRAP: 0,
 
         for _ in range(n[entity_type]):
-            x, y = random_light_position(robots)
-            entity_light = Light(x, y, entity_type)
-            for robot in robots:
-                robot.add_light(entity_light)
+            if entity_type == EntityTypes.ROBOT:
+                for this_robot in robots:
+                    for other_robot in robots:
+                        if other_robot!=this_robot:
+                            this_robot.add_robot(other_robot)
+            else:
+                x, y = random_light_position(robots)
+                entity_light = Light(x, y, entity_type)
+                for robot in robots:
+                    robot.add_light(entity_light)
 
-            if entity_type == EntityTypes.FOOD:
-                food_entities.append(entity_light)
-            """if entity_type == EntityTypes.WATER:
-                water_entities.append(entity_light)
-            if entity_type == EntityTypes.TRAP:
-                trap_entities.append(entity_light)"""
+            # if entity_type == EntityTypes.FOOD:
+            #     food_entities.append(entity_light)
+            # if entity_type == EntityTypes.WATER:
+            #     water_entities.append(entity_light)
+            # if entity_type == EntityTypes.TRAP:
+            #     trap_entities.append(entity_light)
 
     # batteries
     # water_b = 1.0
@@ -120,6 +124,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         controller.trial_data['food_battery_h'] = []
         controller.trial_data['score_h'] = []
         controller.trial_data['eaten_FOOD_positions'] = []
+        controller.trial_data['eaten_ROBOT_positions'] = []
         # controller.trial_data['eaten_WATER_positions'] = []
         # controller.trial_data['eaten_TRAP_positions'] = []
         controller.trial_data['FOOD_positions'] = []
@@ -191,7 +196,6 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                 water_b += 20.0 * DT
                 controller.trial_data['eaten_WATER_positions'].append((light.x, light.y))
                 light.x, light.y = random_light_position(robot)  # relocate entity
-
         # check for TRAP collisions
         for light in robot.lights[EntityTypes.TRAP]:
             if (robot.x - light.x) ** 2 + (robot.y - light.y) ** 2 < ENTITY_RADIUS ** 2:
@@ -224,9 +228,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 def evaluate_fitness(controllers):
     """An evaluation of an individual's fitness is the average of its
     performance in N_TRIAL simulations.
-
     ind -- the controller that is being evaluated
-
     """
 
     trial_scores = np.array([simulate_trial(controllers, trial_index) for trial_index in range(N_TRIALS)])
