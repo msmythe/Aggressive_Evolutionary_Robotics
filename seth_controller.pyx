@@ -7,6 +7,9 @@ ENTITY_RADIUS = 0.1
 
 class EntityTypes(IntEnum):
     FOOD  = 0
+    ROBOT = 1
+    #WATER = 1
+    #TRAP  = 2
 
 class Sides(IntEnum):
     LEFT_SIDE   = 0 # all connections are ipsilateral
@@ -38,12 +41,12 @@ class SMLink(object):
         NYG = SMLink.N_MID_POINTS+2
         self.xs = np.array([0.0] + sorted(genome[:NXG]) + [1.0])
         self.ys = np.array(genome[NXG:NXG+NYG]) *2.0 - 1.0
-        self.battery_sensitivity = int(genome[NXG+NYG] < 0.5) # 0 is food battery, 1 is water
+        self.battery_sensitivity = 0 # 0 is food battery, 1 is water
         self.O = 2.0*genome[NXG+NYG+1] - 1.0 ## \in (-1,1)        
         self.S = genome[NXG+NYG+2]           ## \in (0,1)
 
         ## used for plotting which battery this link is sensitive to
-        self.bsense = ['F','W'][self.battery_sensitivity] 
+        self.bsense = ['F'][self.battery_sensitivity] 
 
     def output(self, sensory_state, battery_states) :
         # the unscaled value shows what this link would output if it
@@ -65,7 +68,7 @@ class SMLink(object):
         return out,unscaled
 
 class SethController(object):
-    def __init__(self, genome=None, n_sensitivities=3, n_motors=2) :
+    def __init__(self, genome=None, n_sensitivities=2, n_motors=2) :
         self.n_sensitivities = n_sensitivities
         self.n_motors = n_motors
         self.SYMMETRIC = True
@@ -89,8 +92,7 @@ class SethController(object):
         ## [Side,EntityType] so you can get the link that
         ## specifies the left link for the FOOD sensitivity
         ## by writing `self.links[Sides.LEFT_SIDE,Thing.FOOD]`
-        self.links = np.array([
-            [SMLink() for s in range(3)]
+        self.links = np.array([[SMLink() for s in range(2)]
             for ipsicontra in range(n_sides)])
             
         self.genome_to_links()
@@ -222,8 +224,8 @@ class SethController(object):
 
 if __name__ == '__main__' :
     l = SMLink()
-    genome = np.random.rand(SMLink.N_GENES) ## a random genome
-    #    genome = [ ] # UNCOMMENT AND EDIT THIS LINE TO SPECIFY YOUR GENOME
+    #genome = np.random.rand(SMLink.N_GENES) ## a random genome
+    genome = [0.0,0.5,1.0,1.0,0.9,0.5,1.0,1.0,1.0] # UNCOMMENT AND EDIT THIS LINE TO SPECIFY YOUR GENOME
     l.set_genome(genome)
     xs = linspace(0,1,101)
 
