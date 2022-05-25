@@ -14,16 +14,17 @@ def plot_state_history(savepath,controller,file_prefix) :
     plot(robot.x_h[-1],robot.y_h[-1],'k.',label=f'Robot Final Position',markersize=15.0)
     c = plt.Circle((robot.x_h[-1],robot.y_h[-1]), robot.RADIUS, color='k',fill=True)
     gca().add_patch(c)
-    for entity_type in EntityTypes:
-        colors = {
-            EntityTypes.FOOD : 'g',
-        }
-        for x,y in controller.trial_data[f'eaten_{entity_type.name}_positions'] :
-            c = plt.Circle((x,y), ENTITY_RADIUS, color=colors[entity_type],fill=False)
-            gca().add_patch(c)
-        for x,y in controller.trial_data[f'uneaten_{entity_type.name}_positions'] :
-            c = plt.Circle((x,y), ENTITY_RADIUS, color=colors[entity_type])
-            gca().add_patch(c)
+    #for entity_type in EntityTypes:
+    entity_type = EntityTypes.FOOD
+    colors = {
+        EntityTypes.FOOD : 'g',
+    }
+    for x,y in controller.trial_data[f'eaten_{entity_type.name}_positions'] :
+        c = plt.Circle((x,y), ENTITY_RADIUS, color=colors[entity_type],fill=False)
+        gca().add_patch(c)
+    for x,y in controller.trial_data[f'uneaten_{entity_type.name}_positions'] :
+        c = plt.Circle((x,y), ENTITY_RADIUS, color=colors[entity_type])
+        gca().add_patch(c)
     xlim(-1.5,1.5)
     ylim(-1.5,1.5)
     gca().set_aspect('equal')
@@ -54,13 +55,14 @@ def plot_state_history(savepath,controller,file_prefix) :
     
     ###########################
     subplot2grid((4,1),(2,0))
-    for entity_type in EntityTypes:
-        colors = {
-            EntityTypes.FOOD : '#00ff00',
-        }
-        s_h = np.array(robot.sensors_h[entity_type])
-        plot(controller.trial_data['sample_times'],s_h[:,0],color=colors[entity_type],ls='-')
-        plot(controller.trial_data['sample_times'],s_h[:,1],color=colors[entity_type],ls='--')
+    #for entity_type in EntityTypes:
+    entity_type = EntityTypes.FOOD
+    colors = {
+        EntityTypes.FOOD : '#00ff00',
+    }
+    s_h = np.array(robot.sensors_h[entity_type])
+    plot(controller.trial_data['sample_times'],s_h[:,0],color=colors[entity_type],ls='-')
+    plot(controller.trial_data['sample_times'],s_h[:,1],color=colors[entity_type],ls='--')
     xticks([])
     ylim(0,1)
     xlim(0,dur)
