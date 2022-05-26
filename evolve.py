@@ -104,6 +104,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                 entity_light = Light(x, y, entity_type)
                 for robot in robots:
                     robot.add_light(entity_light)
+                food_entities.append(entity_light)
 
             # if entity_type == EntityTypes.FOOD:
             #     food_entities.append(entity_light)
