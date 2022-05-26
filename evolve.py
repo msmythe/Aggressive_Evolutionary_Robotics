@@ -151,7 +151,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         current_time += DT
 
         # the battery states steadily drain at a constant rate
-        DRAIN_RATE = 0.0
+        DRAIN_RATE = 0.5
         # water_b = water_b - DT * DRAIN_RATE
         for i, item in enumerate(food_b):
             food_b[i] = item - DT * DRAIN_RATE
