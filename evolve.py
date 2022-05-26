@@ -3,7 +3,7 @@ import copy
 from pylab import *
 import os,sys
 from scipy.spatial.distance import euclidean
-
+import pyximport; pyximport.install(language_level=3)
 
 from robot import Robot,Light
 from seth_controller import SethController, EntityTypes, ENTITY_RADIUS
