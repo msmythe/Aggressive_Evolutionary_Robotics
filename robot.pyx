@@ -83,6 +83,11 @@ class Robot(object) :
             accum += omni * attenuation
         return accum
 
+    def add_robot(self, robot):
+        self.sensors[1] = (robot.x, robot.y)
+        self.sensors_h[1] = []
+        self.otherRobots.append(robot)
+
     def add_light(self,light) :
         if light.light_type not in self.lights.keys() :
             self.lights[light.light_type] = []
@@ -107,8 +112,8 @@ class Robot(object) :
             rs += r.impact_sensor(rsx,rsy,rsa)
         ls=min(1.0,ls)
         rs=min(1.0,rs)
-        self.sensors['robot'] = (ls,rs)
-        self.sensors_h['robot'].append((ls,rs))
+        self.sensors[1] = (ls,rs)
+        self.sensors_h[1].append((ls,rs))
 
         ## calculate light impacts on sensors
         for light_type in self.lights.keys() :
@@ -179,7 +184,6 @@ class Light(object) :
         light_type -- a string or other unique identifier to allow
         different sensors to be sensitive to different 'types' of
         light. Could be 'FOOD' or 'RED', etc.
-
         """
         self.x = x
         self.y = y
@@ -312,4 +316,3 @@ if __name__ == '__main__' :
     legend()
     gca().set_aspect('equal')
     show()
-
