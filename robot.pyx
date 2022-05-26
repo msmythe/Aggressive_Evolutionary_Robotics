@@ -87,6 +87,10 @@ class Robot(object) :
         self.sensors[1] = (robot.x, robot.y)
         self.sensors_h[1] = []
         self.otherRobots.append(robot)
+    
+    def remove_robot(self, robot):
+        other_robot_index = self.otherRobots.index(robot)
+        self.otherRobots.pop(other_robot_index)
 
     def add_light(self,light) :
         if light.light_type not in self.lights.keys() :

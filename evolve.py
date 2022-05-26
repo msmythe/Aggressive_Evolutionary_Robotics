@@ -167,6 +167,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         for entity_type in EntityTypes:
             for i in range(len(controllers)):
                 controllers[i].set_sensor_states(entity_type, robots[i].sensors[entity_type])
+        
         # tell the robot body what the controller says its motors should be
         for i in range(len(controllers)):
             robots[i].lm, robots[i].rm = controllers[i].get_motor_output((food_b[i], 1))
@@ -176,40 +177,80 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 
         # check if robot has collided with FOOD, WATER or TRAP and
         # update batteries, etc.  accordingly
+        
+        #
         # check for FOOD collisions
+        #
         for i in range(len(controllers)):
             for light in robots[i].lights[EntityTypes.FOOD]:
                 if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
                     food_b[i] += 20.0 * DT
                     controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
                     light.x, light.y = random_light_position(robots)  # relocate entity
-
+        
+        #
+        # check for ROBOT collisions
+        #
+        
+        #for i in range(len(controllers)):
+        #    for light in robots[i].otherRobots:
+        #        if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
+        #            food_b[i] += 20.0 * DT
+        #            controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
+        #            # Add code for determining whole wins the fight
+                    
+        
         for i in range(len(controllers)):
-            for light in robots[i].otherRobots:
-                if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
-                    food_b[i] += 20.0 * DT
-                    controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
-                    # Add code for determining whole wins the fight
+            for other_robot in robots[i].otherRobots:
+                #If collision detected initiate combat
+                if (robots[i].x - other_robot.x) ** 2 + (robots[i].y - other_robot.y) ** 2 < ENTITY_RADIUS ** 2:
+                    other_robot_index = robots.index(other_robot)
+                    victory_chance = np.random.rand()
+                    if victory_chance <= 0.5:
+                        robots[i].x=10000
+                        robots[i].y=10000
+                        food_b[i] = 0           #dead battery
+                        food_b[other_robot_index] += 20 * DT
+                    else:
+                        other_robot.x=10000
+                        other_robot.y=10000
+                        food_b[other_robot_index] = 0
+                        food_b[i] += 20 * DT
+                        
 
+
+        
+        
+        """
+        #
         # check for WATER collisions
-        """for light in robot.lights[EntityTypes.WATER]:
+        #
+        for light in robot.lights[EntityTypes.WATER]:
             if (robot.x - light.x) ** 2 + (robot.y - light.y) ** 2 < ENTITY_RADIUS ** 2:
                 water_b += 20.0 * DT
                 controller.trial_data['eaten_WATER_positions'].append((light.x, light.y))
                 light.x, light.y = random_light_position(robot)  # relocate entity
+        #
         # check for TRAP collisions
+        #
         for light in robot.lights[EntityTypes.TRAP]:
             if (robot.x - light.x) ** 2 + (robot.y - light.y) ** 2 < ENTITY_RADIUS ** 2:
                 food_b -= 50.0 * DT
                 water_b -= 50.0 * DT
                 score = 0.0
                 controller.trial_data['eaten_TRAP_positions'].append((light.x, light.y))
-                light.x, light.y = random_light_position(robot)  # relocate entity"""
+                light.x, light.y = random_light_position(robot)  # relocate entity
+        """
 
+        
+        """
+        #
         # DEATH -- if either of the batteries reaches 0, the trial is over
-        """if food_b < 0.0: # or water_b < 0.0:
+        #
+        if food_b < 0.0: # or water_b < 0.0:
             food_b = water_b = 0.0
-            break"""
+            break
+        """
 
     # record the position of the entities still not eaten at end of trial (used for plotting)
     for i in range(len(controllers)):
@@ -227,7 +268,8 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
 
 
 def evaluate_fitness(controllers):
-    """An evaluation of an individual's fitness is the average of its
+    """
+    An evaluation of an individual's fitness is the average of its
     performance in N_TRIAL simulations.
     ind -- the controller that is being evaluated
     """
@@ -243,13 +285,15 @@ def generation():
     global pop, generation_index
 
     # parallel evaluation of fitnesses (in parallel using multiprocessing)
+    
     with Pool() as p:
         pop = p.map(evaluate_fitness, pop)
-
-    """for group in range(len(pop)):
-        pop[group] = evaluate_fitness(pop[group])"""
-    # ## sequential evaluation of fitness
-    # pop = [evaluate_fitness(controller) for controller in pop]
+    """
+    for group in range(len(pop)):
+        pop[group] = evaluate_fitness(pop[group])
+    """
+    ## sequential evaluation of fitness
+    #pop = [evaluate_fitness(controller) for controller in pop]
 
     # the fitness of every individual controller in the population
     fitnesses = []
