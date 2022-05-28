@@ -15,6 +15,7 @@ class Robot(object) :
         self.sensors_h = {}
         self.sensors['robot'] = (0.0, 0.0)
         self.sensors_h['robot'] = []
+        self.alive = True
 
     def reset(self) :
         self.RADIUS = 0.1
@@ -112,8 +113,9 @@ class Robot(object) :
         
         ls = rs = 0.0
         for r in self.otherRobots :
-            ls += r.impact_sensor(lsx,lsy,lsa)
-            rs += r.impact_sensor(rsx,rsy,rsa)
+            if r.alive:
+                ls += r.impact_sensor(lsx,lsy,lsa)
+                rs += r.impact_sensor(rsx,rsy,rsa)
         ls=min(1.0,ls)
         rs=min(1.0,rs)
         self.sensors[1] = (ls,rs)
