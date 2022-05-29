@@ -27,12 +27,17 @@ for item in controller:
     rys.append(item.trial_data['robot'].y_h)
 
 fig, ax = plt.subplots()
-xdata1, ydata1 = [], []
-xdata2, ydata2 = [], []
-xdata3, ydata3 = [], []
-ln1, = plt.plot([], [], 'm,')
-ln2, = plt.plot([], [], 'c,')
-ln3, = plt.plot([], [], 'y,')
+
+xy_data=[]
+for i in range(len(controller)):
+    xdata, ydata = [], []
+    xy_data.append([xdata, ydata])
+
+ln_list=[]
+for i in range(len(controller)):
+    ln_list.append(plt.plot([], [], 'm,'))
+
+
 TRAIL_LENGTH = 100
 
 n_samples, n_entities, n_coords = np.shape( controller[0].trial_data['FOOD_positions'] )
@@ -45,35 +50,54 @@ food_positions = np.array(controller[0].trial_data['FOOD_positions'])
 fc, = plt.plot(food_positions[0,:,0],
                food_positions[0,:,1],'g.',markersize=35.0,alpha=0.5)
 
-robot_pos1, = plt.plot(rxs[0][0],rys[0][0],'m.',markersize=20.0,alpha=0.5)
-robot_pos2, = plt.plot(rxs[1][0], rys[1][0], 'c.', markersize=20.0, alpha=0.5)
-robot_pos3, = plt.plot(rxs[2][0], rys[2][0], 'y.', markersize=20.0, alpha=0.5)
-
+robot_positions = []
+for i in range(len(controller)):
+    robot_positions.append(plt.plot(rxs[i][0],rys[i][0],'m.',markersize=20.0,alpha=0.5))
 
 def init():
     ax.set_xlim(-1.5, 1.5)
     ax.set_ylim(-1.5, 1.5)
     ax.set_aspect('equal')
-    return ln1, ln2, ln3, fc, robot_pos1, robot_pos2, robot_pos3
+    
+    ln_tuple=()
+    for temp_ln_list in ln_list:
+        ln_tuple+=tuple(temp_ln_list)
+    
+    robot_positions_tuple=()
+    for temp_robo_pos_list in robot_positions:
+        robot_positions_tuple+=tuple(temp_robo_pos_list)
 
+    Ret_Value = ln_tuple + tuple([fc]) + robot_positions_tuple
+    return Ret_Value
 
 def update(frame):
     current_it = frame*its_per_frame 
-    xdata1 = rxs[0][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
-    ydata1 = rys[0][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
-    xdata2 = rxs[1][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
-    ydata2 = rys[1][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
-    xdata3 = rxs[2][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
-    ydata3 = rys[2][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
-    ln1.set_data(xdata1, ydata1)
-    ln2.set_data(xdata2, ydata2)
-    ln3.set_data(xdata3, ydata3)
+    
+    for robot_index in range(len(controller)):
+        xy_data[robot_index][0] =  rxs[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
+        xy_data[robot_index][1] =  rxs[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
+
+    for temp_ln in ln_list:
+        for robot_index in range(len(controller)):
+            temp_ln[0].set_data(xy_data[robot_index][0],xy_data[robot_index][1])
+
     fc.set_data(food_positions[current_it, :, 0],
                 food_positions[current_it, :, 1])
-    robot_pos1.set_data(rxs[0][current_it], rys[0][current_it])
-    robot_pos2.set_data(rxs[1][current_it], rys[1][current_it])
-    robot_pos3.set_data(rxs[2][current_it], rys[2][current_it])
-    return ln1, ln2, ln3, fc, robot_pos1, robot_pos2, robot_pos3
+
+    for robot_index in range(len(controller)):
+        robot_positions[robot_index][0].set_data(rxs[robot_index][current_it], rys[robot_index][current_it])
+
+    ln_tuple=()
+    for temp_ln in ln_list:
+        ln_tuple+=tuple(temp_ln)
+
+    robot_positions_tuple=()
+    for temp_robo_pos_list in robot_positions:
+        robot_positions_tuple+=tuple(temp_robo_pos_list)
+
+    Ret_Val = ln_tuple + tuple([fc]) + robot_positions_tuple
+
+    return Ret_Val
 
 
 ani = FuncAnimation(fig, update, frames=len(rxs[0])//its_per_frame,
