@@ -154,7 +154,8 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         DRAIN_RATE = 0.5
         # water_b = water_b - DT * DRAIN_RATE
         for i, item in enumerate(food_b):
-            food_b[i] = item - DT * DRAIN_RATE
+            if robots[i].alive:
+                food_b[i] = item - DT * DRAIN_RATE
 
         # water_b -= (robot.lm**2) * DT * 0.01
         # food_b  -= (robot.rm**2) * DT * 0.01
@@ -170,8 +171,11 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         
         # tell the robot body what the controller says its motors should be
         for i in range(len(controllers)):
-            robots[i].lm, robots[i].rm = controllers[i].get_motor_output((food_b[i], 1))
-
+            if robots[i].alive:
+                robots[i].lm, robots[i].rm = controllers[i].get_motor_output((food_b[i], 1))
+            else:
+                robots[i].lm = 0
+                robots[i].rm = 0
             robots[i].calculate_derivative()  # calculate the way that the robot's state it changing
             robots[i].euler_update(DT=DT)  # apply that state change (Euler integration step)
 
@@ -190,37 +194,42 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         
         #
         # check for ROBOT collisions
-        #
+        #                    
         
-        #for i in range(len(controllers)):
-        #    for light in robots[i].otherRobots:
-        #        if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
-        #            food_b[i] += 20.0 * DT
-        #            controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
-        #            # Add code for determining whole wins the fight
-                    
-        
+        # for i in range(len(controllers)):
+        #     for other_robot in robots[i].otherRobots:
+        #         #If collision detected initiate combat
+        #         if (robots[i].x - other_robot.x) ** 2 + (robots[i].y - other_robot.y) ** 2 < ENTITY_RADIUS ** 2:
+        #             other_robot_index = robots.index(other_robot)
+        #             victory_chance = np.random.rand()
+        #             if victory_chance <= 0.5:
+        #                 robots[i].x=10000
+        #                 robots[i].y=10000
+        #                 food_b[i] = 0           #dead battery
+        #                 food_b[other_robot_index] += 20 * DT
+        #             else:
+        #                 other_robot.x=10000
+        #                 other_robot.y=10000
+        #                 food_b[other_robot_index] = 0
+        #                 food_b[i] += 20 * DT
+
         for i in range(len(controllers)):
             for other_robot in robots[i].otherRobots:
                 #If collision detected initiate combat
                 if (robots[i].x - other_robot.x) ** 2 + (robots[i].y - other_robot.y) ** 2 < ENTITY_RADIUS ** 2:
+                    if robots[i].alive == False or other_robot.alive == False:
+                        continue
                     other_robot_index = robots.index(other_robot)
-                    victory_chance = np.random.rand()
-                    if victory_chance <= 0.5:
-                        robots[i].x=10000
-                        robots[i].y=10000
+                    success = np.random.rand()
+                    if success <= 0.5:      #50% chance to win confrontation
+                        robots[i].alive = False
                         food_b[i] = 0           #dead battery
                         food_b[other_robot_index] += 20 * DT
                     else:
-                        other_robot.x=10000
-                        other_robot.y=10000
+                        other_robot.alive = False
                         food_b[other_robot_index] = 0
                         food_b[i] += 20 * DT
-                        
-
-
-        
-        
+                                
         """
         #
         # check for WATER collisions
@@ -243,14 +252,26 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         """
 
         
-        """
+        
         #
-        # DEATH -- if either of the batteries reaches 0, the trial is over
+        # DEATH -- if all robots batteries reaches 0, the trial is over
         #
-        if food_b < 0.0: # or water_b < 0.0:
-            food_b = water_b = 0.0
+        for i in range(len(controllers)):
+            if food_b[i] == 0 and robots[i].alive:
+                robots[i].alive=False               #robot dies when battery is 0
+                for j in range(len(robots)):        #remove dead robot from the other robots vision
+                    robots[j].remove_robot(robots[i])
+        
+        all_dead = True
+        for i in range(len(robots)):
+            if robots[i].alive:
+                all_dead=False
+                break
+        
+        if all_dead:
             break
-        """
+            
+        
 
     # record the position of the entities still not eaten at end of trial (used for plotting)
     for i in range(len(controllers)):
