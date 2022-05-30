@@ -24,10 +24,10 @@ DRAW_EVERY_NTH_GENERATION = 5
 
 # EVOLUTION PARAMETERS
 N_TRIALS = 5
-POP_SIZE = 5       #originally 25
+POP_SIZE = 6       #originally 25
 SITUATION_DURATION = 15.0
 DT = 0.02
-PER_GROUP = 5
+PER_GROUP = 4
 ROBOT_FOOD_WORTH = 20.0
 NATURAL_FOOD_WORTH = 20.0
 NUMBER_OF_NATURAL_FOOD = 2
@@ -64,6 +64,7 @@ def random_light_position(robots):
             if robot_close:
                 break
         if attempts > 100000:
+            print("Failed to find new food position, returning a colliding one")
             return x, y
     return x, y
 
@@ -295,13 +296,13 @@ def generation():
 
     # parallel evaluation of fitnesses (in parallel using multiprocessing)
     
-    #with Pool() as p:
-     #   pop = p.map(evaluate_fitness, pop)
+    with Pool() as p:
+        pop = p.map(evaluate_fitness, pop)
 
     ## sequential evaluation of fitness
 
-    for group in range(len(pop)):
-        pop[group] = evaluate_fitness(pop[group])
+    """for group in range(len(pop)):
+        pop[group] = evaluate_fitness(pop[group])"""
 
     # the fitness of every individual controller in the population
     fitnesses = []
@@ -416,6 +417,8 @@ def evolve():
         if generation_index % DRAW_EVERY_NTH_GENERATION == 0:
             fitness_plots(savepath, pop_fit_history)
             plot_population_genepool(savepath, pop)
+        if generation_index >= 150:
+            break
 
 
 if __name__ == '__main__':

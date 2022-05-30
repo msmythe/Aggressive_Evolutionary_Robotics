@@ -78,9 +78,8 @@ def update(frame):
         xy_data[robot_index][0] =  rxs[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
         xy_data[robot_index][1] =  rys[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
 
-    for temp_ln in ln_list:
-        for robot_index in num_of_controllers:
-            temp_ln[0].set_data(xy_data[robot_index][0],xy_data[robot_index][1])
+    for temp_in, temp_ln in enumerate(ln_list):
+        temp_ln[0].set_data(xy_data[temp_in][0],xy_data[temp_in][1])
 
     fc.set_data(food_positions[current_it, :, 0],
                 food_positions[current_it, :, 1])
