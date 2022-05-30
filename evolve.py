@@ -24,11 +24,13 @@ DRAW_EVERY_NTH_GENERATION = 5
 
 # EVOLUTION PARAMETERS
 N_TRIALS = 5
-POP_SIZE = 25
-generation_index = 0
+POP_SIZE = 5       #originally 25
 SITUATION_DURATION = 15.0
 DT = 0.02
 PER_GROUP = 3
+ROBOT_FOOD_WORTH = 20.0
+NATURAL_FOOD_WORTH = 20.0
+NUMBER_OF_NATURAL_FOOD = 2
 N_STEPS = int(SITUATION_DURATION / DT)  # the maximum number of steps per trial
 
 if TEST_GA:
@@ -41,6 +43,10 @@ pop = [[SethController() for _ in range(PER_GROUP)] for _ in range(POP_SIZE)]  #
 # This keeps track of the fitness of the entire population since the start of the evolution.
 # It is plotted in fitness_history.png
 pop_fit_history = []
+
+# Book keeping variables:
+generation_index = 0
+
 
 
 def random_light_position(robots):
@@ -84,12 +90,12 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         controller.trial_data = {}
 
     food_entities = []
-    water_entities = []
-    trap_entities = []
+    #water_entities = []
+    #trap_entities = []
 
     # reset the environment
     for entity_type in EntityTypes:
-        n = {EntityTypes.FOOD: 2, EntityTypes.ROBOT: PER_GROUP}  # how many of each entity type to create
+        n = {EntityTypes.FOOD: NUMBER_OF_NATURAL_FOOD, EntityTypes.ROBOT: PER_GROUP}  # how many of each entity type to create
             #EntityTypes.WATER: 0,
             #EntityTypes.TRAP: 0,
 
@@ -113,9 +119,7 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
             # if entity_type == EntityTypes.TRAP:
             #     trap_entities.append(entity_light)
 
-    # batteries
-    # water_b = 1.0
-
+    # FOOD battery
     food_b = [1.0 for _ in range(PER_GROUP)]
 
     # these variables keep track of things we want to plot later
@@ -188,31 +192,13 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
         for i in range(len(controllers)):
             for light in robots[i].lights[EntityTypes.FOOD]:
                 if (robots[i].x - light.x) ** 2 + (robots[i].y - light.y) ** 2 < ENTITY_RADIUS ** 2:
-                    food_b[i] += 20.0 * DT
+                    food_b[i] += NATURAL_FOOD_WORTH * DT
                     controllers[i].trial_data['eaten_FOOD_positions'].append((light.x, light.y))
                     light.x, light.y = random_light_position(robots)  # relocate entity
         
         #
         # check for ROBOT collisions
-        #                    
-        
-        # for i in range(len(controllers)):
-        #     for other_robot in robots[i].otherRobots:
-        #         #If collision detected initiate combat
-        #         if (robots[i].x - other_robot.x) ** 2 + (robots[i].y - other_robot.y) ** 2 < ENTITY_RADIUS ** 2:
-        #             other_robot_index = robots.index(other_robot)
-        #             victory_chance = np.random.rand()
-        #             if victory_chance <= 0.5:
-        #                 robots[i].x=10000
-        #                 robots[i].y=10000
-        #                 food_b[i] = 0           #dead battery
-        #                 food_b[other_robot_index] += 20 * DT
-        #             else:
-        #                 other_robot.x=10000
-        #                 other_robot.y=10000
-        #                 food_b[other_robot_index] = 0
-        #                 food_b[i] += 20 * DT
-
+        #
         for i in range(len(controllers)):
             for other_robot in robots[i].otherRobots:
                 #If collision detected initiate combat
@@ -224,11 +210,11 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                     if success <= 0.5:      #50% chance to win confrontation
                         robots[i].alive = False
                         food_b[i] = 0           #dead battery
-                        food_b[other_robot_index] += 20 * DT
+                        food_b[other_robot_index] += ROBOT_FOOD_WORTH * DT
                     else:
                         other_robot.alive = False
                         food_b[other_robot_index] = 0
-                        food_b[i] += 20 * DT
+                        food_b[i] += ROBOT_FOOD_WORTH * DT
                                 
         """
         #
@@ -251,8 +237,6 @@ def simulate_trial(controllers, trial_index, generating_animation=False):
                 light.x, light.y = random_light_position(robot)  # relocate entity
         """
 
-        
-        
         #
         # DEATH -- if all robots batteries reaches 0, the trial is over
         #
@@ -309,24 +293,25 @@ def generation():
     
     with Pool() as p:
         pop = p.map(evaluate_fitness, pop)
-    """
-    for group in range(len(pop)):
-        pop[group] = evaluate_fitness(pop[group])
-    """
+
     ## sequential evaluation of fitness
-    #pop = [evaluate_fitness(controller) for controller in pop]
+
+    #for group in range(len(pop)):
+    #    pop[group] = evaluate_fitness(pop[group])
 
     # the fitness of every individual controller in the population
     fitnesses = []
     for item in pop:
         for control in item:
             fitnesses.append(control.fitness)
+    
     # we track the fitness of every individual at every generation for plotting
     pop_fit_history.append(sorted(np.array(fitnesses)))
     all_individuals = []
     for item in pop:
         for control in item:
             all_individuals.append(control)
+    
     # ## every nth generation, we plot the trajectories of the best and
     # ## worst individual
     if (generation_index % DRAW_EVERY_NTH_GENERATION) == 0:

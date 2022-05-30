@@ -17,6 +17,7 @@ for index in range(PER_GROUP):
     genomes.append(np.load("output/{}_genome.npy".format(index)))
 
 controller = [SethController(genome = genome) for genome in genomes]
+num_of_controllers=range(len(controller))
 
 seed = np.random.randint(1000)
 simulate_trial(controller,seed,generating_animation=True)
@@ -29,12 +30,12 @@ for item in controller:
 fig, ax = plt.subplots()
 
 xy_data=[]
-for i in range(len(controller)):
+for i in num_of_controllers:
     xdata, ydata = [], []
     xy_data.append([xdata, ydata])
 
 ln_list=[]
-for i in range(len(controller)):
+for i in num_of_controllers:
     ln_list.append(plt.plot([], [], 'm,'))
 
 
@@ -51,7 +52,7 @@ fc, = plt.plot(food_positions[0,:,0],
                food_positions[0,:,1],'g.',markersize=35.0,alpha=0.5)
 
 robot_positions = []
-for i in range(len(controller)):
+for i in num_of_controllers:
     robot_positions.append(plt.plot(rxs[i][0],rys[i][0],'m.',markersize=20.0,alpha=0.5))
 
 def init():
@@ -71,20 +72,20 @@ def init():
     return Ret_Value
 
 def update(frame):
-    current_it = frame*its_per_frame 
-    
-    for robot_index in range(len(controller)):
+    current_it = frame*its_per_frame
+
+    for robot_index in num_of_controllers:
         xy_data[robot_index][0] =  rxs[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
         xy_data[robot_index][1] =  rxs[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
 
     for temp_ln in ln_list:
-        for robot_index in range(len(controller)):
+        for robot_index in num_of_controllers:
             temp_ln[0].set_data(xy_data[robot_index][0],xy_data[robot_index][1])
 
     fc.set_data(food_positions[current_it, :, 0],
                 food_positions[current_it, :, 1])
 
-    for robot_index in range(len(controller)):
+    for robot_index in num_of_controllers:
         robot_positions[robot_index][0].set_data(rxs[robot_index][current_it], rys[robot_index][current_it])
 
     ln_tuple=()
