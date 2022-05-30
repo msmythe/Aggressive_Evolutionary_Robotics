@@ -54,13 +54,17 @@ def random_light_position(robots):
     y = np.random.rand() * 2.0 - 1.0
     robot_close = True
     # make sure new position is not too close to other lights or the robot
+    attempts = 0
     while robot_close:
+        attempts += 1
         x = np.random.rand() * 2.0 - 1.0
         y = np.random.rand() * 2.0 - 1.0
         for robot in robots:
             robot_close = robot.is_close_to_any_light_or_the_robot(x, y, 2.0 * ENTITY_RADIUS)
             if robot_close:
                 break
+        if attempts > 100000:
+            return x, y
     return x, y
 
 
@@ -291,13 +295,13 @@ def generation():
 
     # parallel evaluation of fitnesses (in parallel using multiprocessing)
     
-    with Pool() as p:
-        pop = p.map(evaluate_fitness, pop)
+    #with Pool() as p:
+     #   pop = p.map(evaluate_fitness, pop)
 
     ## sequential evaluation of fitness
 
-    #for group in range(len(pop)):
-    #    pop[group] = evaluate_fitness(pop[group])
+    for group in range(len(pop)):
+        pop[group] = evaluate_fitness(pop[group])
 
     # the fitness of every individual controller in the population
     fitnesses = []
