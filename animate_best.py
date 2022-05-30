@@ -76,7 +76,7 @@ def update(frame):
 
     for robot_index in num_of_controllers:
         xy_data[robot_index][0] =  rxs[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
-        xy_data[robot_index][1] =  rxs[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
+        xy_data[robot_index][1] =  rys[robot_index][0 if current_it - TRAIL_LENGTH < 0 else current_it - TRAIL_LENGTH:current_it]
 
     for temp_ln in ln_list:
         for robot_index in num_of_controllers:
